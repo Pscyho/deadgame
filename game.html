@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Mini Deadshot.io Clone</title>
+  <style>
+    body { margin: 0; overflow: hidden; }
+    canvas { display: block; }
+  </style>
+</head>
+<body>
+  <script src="https://cdn.jsdelivr.net/npm/three@0.157.0/build/three.min.js"></script>
+  <script>
+    // Setup scene, camera, and renderer
+    const scene = new THREE.Scene();
+    const camera = new THREE.PerspectiveCamera(75, window.innerWidth/window.innerHeight, 0.1, 1000);
+    const renderer = new THREE.WebGLRenderer();
+    renderer.setSize(window.innerWidth, window.innerHeight);
+    document.body.appendChild(renderer.domElement);
+
+    // Add ground
+    const groundGeo = new THREE.PlaneGeometry(100, 100);
+    const groundMat = new THREE.MeshBasicMaterial({ color: 0x008800 });
+    const ground = new THREE.Mesh(groundGeo, groundMat);
+    ground.rotation.x = -Math.PI / 2;
+    scene.add(ground);
+
+    // Create player
+    const playerGeo = new THREE.BoxGeometry(1, 2, 1);
+    const playerMat = new THREE.MeshBasicMaterial({ color: 0x0000ff });
+    const player = new THREE.Mesh(playerGeo, playerMat);
+    player.position.y = 1;
+    scene.add(player);
+
+    // Create bot
+    const botGeo = new THREE.BoxGeometry(1, 2, 1);
+    const botMat = new THREE.MeshBasicMaterial({ color: 0xff0000 });
+    const bot = new THREE.Mesh(botGeo, botMat);
+    bot.position.set(10, 1, 0);
+    scene.add(bot);
+
+    // Set camera
+    camera.position.set(0, 5, 10);
+    camera.lookAt(player.position);
+
+    // Keyboard controls
+    const keys = {};
+    document.addEventListener('keydown', e => keys[e.key] = true);
+    document.addEventListener('keyup', e => keys[e.key] = false);
+
+    // Animate
+    function animate() {
+      requestAnimationFrame(animate);
+
+      if (keys['w']) player.position.z -= 0.1;
+      if (keys['s']) player.position.z += 0.1;
+      if (keys['a']) player.position.x -= 0.1;
+      if (keys['d']) player.position.x += 0.1;
+
+      // Bot follows player
+      const dx = player.position.x - bot.position.x;
+      const dz = player.position.z - bot.position.z;
+      const distance = Math.sqrt(dx*dx + dz*dz);
+      if (distance > 2) {
+        bot.position.x += dx * 0.01;
+        bot.position.z += dz * 0.01;
+      }
+
+      camera.position.x = player.position.x;
+      camera.position.z = player.position.z + 10;
+      camera.lookAt(player.position);
+
+      renderer.render(scene, camera);
+    }
+    animate();
+  </script>
+</body>
+</html>
