@@ -62,7 +62,7 @@ function updateBots() {
     const dist = Math.sqrt(dx * dx + dy * dy);
 
     if (dist < 40) {
-      player.health -= 1;
+      player.health -= 5;
       touchingEnemy = true;
       bot.dx *= -1;
       bot.dy *= -1;
@@ -70,14 +70,14 @@ function updateBots() {
         alert('Game Over! Final Score: ' + player.score);
         document.location.reload();
       }
-        player.score += 10;
+        player.score += 25;
         bot.x = Math.random() * canvas.width;
         bot.y = Math.random() * canvas.height;
     }
   }
 
   if (!touchingEnemy && player.health < 100) {
-    player.health += 0.1;
+    player.health += 0.05;
   }
 }
 
