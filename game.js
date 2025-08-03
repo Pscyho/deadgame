@@ -6,7 +6,8 @@ canvas.height = window.innerHeight;
 let player = {
   x: canvas.width / 2,
   y: canvas.height / 2,
-  radius: 20,
+  width: 20,
+  height: 40,
   color: 'lime',
   health: 100,
   score: 0
@@ -17,28 +18,31 @@ for (let i = 0; i < 5; i++) {
   bots.push({
     x: Math.random() * canvas.width,
     y: Math.random() * canvas.height,
-    radius: 15,
+    width: 20,
+    height: 40,
     color: 'crimson',
     dx: (Math.random() - 0.5) * 2,
     dy: (Math.random() - 0.5) * 2
   });
 }
 
-function drawCircle(x, y, radius, color) {
-  ctx.beginPath();
-  ctx.arc(x, y, radius, 0, Math.PI * 2);
+function drawHuman(x, y, width, height, color) {
   ctx.fillStyle = color;
+  ctx.fillRect(x - width / 2, y - height / 2, width, height);
+  // Head
+  ctx.beginPath();
+  ctx.arc(x, y - height / 2 - 8, 8, 0, Math.PI * 2);
   ctx.fill();
   ctx.closePath();
 }
 
 function drawPlayer() {
-  drawCircle(player.x, player.y, player.radius, player.color);
+  drawHuman(player.x, player.y, player.width, player.height, player.color);
 }
 
 function drawBots() {
   for (const bot of bots) {
-    drawCircle(bot.x, bot.y, bot.radius, bot.color);
+    drawHuman(bot.x, bot.y, bot.width, bot.height, bot.color);
   }
 }
 
@@ -57,7 +61,7 @@ function updateBots() {
     const dy = bot.y - player.y;
     const dist = Math.sqrt(dx * dx + dy * dy);
 
-    if (dist < bot.radius + player.radius) {
+    if (dist < 40) {
       player.health -= 1;
       touchingEnemy = true;
       bot.dx *= -1;
@@ -66,11 +70,14 @@ function updateBots() {
         alert('Game Over! Final Score: ' + player.score);
         document.location.reload();
       }
+        player.score += 10;
+        bot.x = Math.random() * canvas.width;
+        bot.y = Math.random() * canvas.height;
     }
   }
 
   if (!touchingEnemy && player.health < 100) {
-    player.health += 0.1; // slow regen
+    player.health += 0.1;
   }
 }
 
