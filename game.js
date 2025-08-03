@@ -1,6 +1,7 @@
-// JavaScript File (game.js)
 const canvas = document.getElementById('gameCanvas');
 const ctx = canvas.getContext('2d');
+canvas.width = window.innerWidth;
+canvas.height = window.innerHeight;
 
 let player = {
   x: canvas.width / 2,
@@ -41,7 +42,10 @@ function drawBots() {
   }
 }
 
+let touchingEnemy = false;
+
 function updateBots() {
+  touchingEnemy = false;
   for (const bot of bots) {
     bot.x += bot.dx;
     bot.y += bot.dy;
@@ -49,26 +53,29 @@ function updateBots() {
     if (bot.x < 0 || bot.x > canvas.width) bot.dx *= -1;
     if (bot.y < 0 || bot.y > canvas.height) bot.dy *= -1;
 
-    // Collision detection with player
     const dx = bot.x - player.x;
     const dy = bot.y - player.y;
     const dist = Math.sqrt(dx * dx + dy * dy);
 
     if (dist < bot.radius + player.radius) {
       player.health -= 1;
+      touchingEnemy = true;
       bot.dx *= -1;
       bot.dy *= -1;
       if (player.health <= 0) {
         alert('Game Over! Final Score: ' + player.score);
         document.location.reload();
       }
-        player.score += 10;
     }
+  }
+
+  if (!touchingEnemy && player.health < 100) {
+    player.health += 0.1; // slow regen
   }
 }
 
 function updateUI() {
-  document.getElementById('health').textContent = player.health;
+  document.getElementById('health').textContent = Math.round(player.health);
   document.getElementById('score').textContent = player.score;
 }
 
@@ -83,11 +90,9 @@ function gameLoop() {
   requestAnimationFrame(gameLoop);
 }
 
-// Handle Mouse Movement
 canvas.addEventListener('mousemove', (e) => {
-  player.x = e.offsetX;
-  player.y = e.offsetY;
+  player.x = e.clientX;
+  player.y = e.clientY;
 });
 
-// Start Game
 gameLoop();
