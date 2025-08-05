@@ -22,24 +22,22 @@ function spawnBot() {
     height: 40,
     color: 'crimson',
     dx: (Math.random() - 0.5) * 2,
-    dy: (Math.random() - 0.5) * 2
+    dy: (Math.random() - 0.5) * 2,
+    shootCooldown: Math.random() * 200 + 100 // Random delay
   });
 }
-for (let i = 0; i < 5; i++) {
-  spawnBot();
-}
+for (let i = 0; i < 5; i++) spawnBot();
 
 let bullets = [];
+let enemyBullets = [];
 
 function drawHuman(x, y, width, height, color, drawGun = true) {
   ctx.fillStyle = color;
   ctx.fillRect(x - width / 2, y - height / 2, width, height);
-  // Head
   ctx.beginPath();
   ctx.arc(x, y - height / 2 - 8, 8, 0, Math.PI * 2);
   ctx.fill();
   ctx.closePath();
-  // Gun
   if (drawGun) {
     ctx.strokeStyle = 'silver';
     ctx.lineWidth = 3;
@@ -67,12 +65,16 @@ function drawBullets() {
     ctx.arc(bullet.x, bullet.y, 4, 0, Math.PI * 2);
     ctx.fill();
   }
+
+  ctx.fillStyle = 'red';
+  for (const bullet of enemyBullets) {
+    ctx.beginPath();
+    ctx.arc(bullet.x, bullet.y, 4, 0, Math.PI * 2);
+    ctx.fill();
+  }
 }
 
-let touchingEnemy = false;
-
 function updateBots() {
-  touchingEnemy = false;
   for (let i = bots.length - 1; i >= 0; i--) {
     const bot = bots[i];
     bot.x += bot.dx;
@@ -86,42 +88,42 @@ function updateBots() {
     const dist = Math.sqrt(dx * dx + dy * dy);
 
     if (dist < 40) {
-      player.health -= 2;
-      touchingEnemy = true;
+      player.health -= 1;
       bot.dx *= -1;
       bot.dy *= -1;
       if (player.health <= 0) {
-        alert('KATAM TATA BYE BYE : ' + player.score);
+        alert('Game Over! Final Score: ' + player.score);
         document.location.reload();
-      } else {
-        // Push the player away from the bot
-        player.x += dx * 0.1;
-        player.y += dy * 0.1;
       }
-    }       
+    }
+
+    // === Enemy shooting logic ===
+    bot.shootCooldown--;
+    if (bot.shootCooldown <= 0) {
+      const angle = Math.atan2(player.y - bot.y, player.x - bot.x);
+      enemyBullets.push({
+        x: bot.x,
+        y: bot.y,
+        vx: Math.cos(angle) * 4,
+        vy: Math.sin(angle) * 4
+      });
+      bot.shootCooldown = Math.random() * 150 + 100;
+    }
   }
 
-  if (!touchingEnemy && player.health < 100) {
-    player.health += 0.04;
-  }
+  if (player.health < 100) player.health += 0.1;
 }
 
 function updateBullets() {
+  // Player bullets
   for (let i = bullets.length - 1; i >= 0; i--) {
     const bullet = bullets[i];
     bullet.x += bullet.vx;
     bullet.y += bullet.vy;
-
-    // Remove bullets outside screen
-    if (
-      bullet.x < 0 || bullet.x > canvas.width ||
-      bullet.y < 0 || bullet.y > canvas.height
-    ) {
+    if (bullet.x < 0 || bullet.x > canvas.width || bullet.y < 0 || bullet.y > canvas.height) {
       bullets.splice(i, 1);
       continue;
     }
-
-    // Collision with bots
     for (let j = bots.length - 1; j >= 0; j--) {
       const bot = bots[j];
       const dx = bot.x - bullet.x;
@@ -130,9 +132,31 @@ function updateBullets() {
       if (dist < 20) {
         bots.splice(j, 1);
         bullets.splice(i, 1);
-        player.score++;
-        spawnBot(); // respawn a bot after one dies
+        player.score+= 20;
+        spawnBot();
         break;
+      }
+    }
+  }
+
+  // Enemy bullets
+  for (let i = enemyBullets.length - 1; i >= 0; i--) {
+    const bullet = enemyBullets[i];
+    bullet.x += bullet.vx;
+    bullet.y += bullet.vy;
+    if (bullet.x < 0 || bullet.x > canvas.width || bullet.y < 0 || bullet.y > canvas.height) {
+      enemyBullets.splice(i, 1);
+      continue;
+    }
+    const dx = bullet.x - player.x;
+    const dy = bullet.y - player.y;
+    const dist = Math.sqrt(dx * dx + dy * dy);
+    if (dist < 20) {
+      player.health -= 5;
+      enemyBullets.splice(i, 1);
+      if (player.health <= 0) {
+        alert('Game Over! Final Score: ' + player.score);
+        document.location.reload();
       }
     }
   }
@@ -145,14 +169,12 @@ function updateUI() {
 
 function gameLoop() {
   ctx.clearRect(0, 0, canvas.width, canvas.height);
-
   drawPlayer();
   drawBots();
   drawBullets();
   updateBots();
   updateBullets();
   updateUI();
-
   requestAnimationFrame(gameLoop);
 }
 
